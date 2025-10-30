@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Chat | 智能助手</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    --primary: #4361ee;
+    --primary-light: #4895ef;
+    --secondary: #3f37c9;
+    --dark: #1e1e24;
+    --light: #f8f9fa;
+    --gray: #adb5bd;
+    --success: #4cc9f0;
+    --danger: #f72585;
+    --warning: #f8961e;
+    --info: #4cc9f0;
+    
+    --user-bg: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+    --bot-bg: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    --send-btn: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+    --stop-btn: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+    
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-md: 0 10px 15px rgba(0,0,0,0.1);
+    --shadow-lg: 0 20px 25px rgba(0,0,0,0.1);
+    --shadow-xl: 0 25px 50px rgba(0,0,0,0.25);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: var(--dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: 0;
+    position: relative;
+    overflow-x: hidden;
+}
+
+header {
+    width: 100%;
+    background: white;
+    box-shadow: var(--shadow);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo i {
+    font-size: 1.5rem;
+    color: var(--primary);
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 0;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.actions button {
+    background: none;
+    border: none;
+    color: var(--gray);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.actions button:hover {
+    color: var(--primary);
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+#chat-box {
+    width: 100%;
+    height: 65vh;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    scroll-behavior: smooth;
+    position: relative;
+}
+
+.welcome-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--gray);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.welcome-message i {
+    font-size: 3rem;
+    color: var(--primary-light);
+}
+
+.welcome-message h2 {
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.welcome-message p {
+    max-width: 600px;
+    line-height: 1.6;
+}
+
+.message {
+    display: flex;
+    max-width: 85%;
+    word-wrap: break-word;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.user {
+    justify-content: flex-end;
+    margin-left: auto;
+}
+
+.user .content {
+    background: var(--user-bg);
+    color: white;
+    border-radius: 1.25rem 1.25rem 0 1.25rem;
+    box-shadow: var(--shadow);
+}
+
+.bot {
+    justify-content: flex-start;
+}
+
+.bot .content {
+    background: var(--bot-bg);
+    color: var(--dark);
+    border-radius: 1.25rem 1.25rem 1.25rem 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.message .content {
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    position: relative;
+}
+
+.message .content pre {
+    background: rgba(0,0,0,0.05);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+}
+
+.message .content code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    background: rgba(0,0,0,0.05);
+    padding: 0.2em 0.4em;
+    border-radius: 0.2em;
+}
+
+.user .content::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: -10px;
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+    border-left-color: #4361ee;
+    border-right: 0;
+    border-bottom: 0;
+    margin-bottom: -5px;
+}
+
+.bot .content::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -10px;
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+    border-right-color: #f8f9fa;
+    border-left: 0;
+    border-bottom: 0;
+    margin-bottom: -5px;
+}
+
+.message-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--gray);
+}
+
+.message-info i {
+    font-size: 1rem;
+}
+
+#input-box {
+    width: 100%;
+    display: flex;
+    gap: 0.75rem;
+    background: white;
+    border-radius: 1.25rem;
+    padding: 0.75rem;
+    box-shadow: var(--shadow-xl);
+}
+
+#message {
+    flex: 1;
+    padding: 0.75rem 1.25rem;
+    border-radius: 1rem;
+    border: none;
+    font-size: 1rem;
+    outline: none;
+    background: var(--light);
+    transition: all 0.2s ease;
+}
+
+#message:focus {
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+#input-box button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#send {
+    background: var(--send-btn);
+    box-shadow: var(--shadow);
+}
+
+#send:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+#stop {
+    background: var(--stop-btn);
+    box-shadow: var(--shadow);
+}
+
+#stop:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.typing-indicator {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--bot-bg);
+    border-radius: 1.25rem 1.25rem 1.25rem 0;
+    width: fit-content;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.25rem;
+}
+
+.typing-indicator span {
+    height: 10px;
+    width: 10px;
+    background: var(--gray);
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1.5s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-5px); }
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(67, 97, 238, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    header {
+        padding: 1rem;
+    }
+    
+    .logo h1 {
+        font-size: 1.25rem;
+    }
+    
+    .container {
+        padding: 1rem;
+    }
+    
+    #chat-box {
+        height: 70vh;
+        padding: 1rem;
+    }
+    
+    .message {
+        max-width: 90%;
+    }
+    
+    #input-box {
+        flex-direction: column;
+    }
+    
+    #input-box button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* 暗黑模式 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+        color: #f0f0f0;
+    }
+    
+    header {
+        background: #1e1e1e;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    
+    .logo h1 {
+        color: #f0f0f0;
+    }
+    
+    #chat-box {
+        background: #2d2d2d;
+    }
+    
+    .welcome-message {
+        color: #a0a0a0;
+    }
+    
+    .welcome-message h2 {
+        color: #f0f0f0;
+    }
+    
+    .bot .content {
+        background: #3d3d3d;
+        color: #f0f0f0;
+    }
+    
+    .bot .content::after {
+        border-right-color: #3d3d3d;
+    }
+    
+    .message-info {
+        color: #7a7a7a;
+    }
+    
+    #input-box {
+        background: #2d2d2d;
+    }
+    
+    #message {
+        background: #3d3d3d;
+        color: #f0f0f0;
+    }
+    
+    .typing-indicator {
+        background: #3d3d3d;
+    }
+    
+    .typing-indicator span {
+        background: #7a7a7a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: rgba(67, 97, 238, 0.7);
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <i class="fas fa-robot"></i>
+        <h1>AI 智能助手</h1>
+    </div>
+    <div class="actions">
+        <button title="设置"><i class="fas fa-cog"></i></button>
+        <button title="历史记录"><i class="fas fa-history"></i></button>
+    </div>
+</header>
+
+<div class="container">
+    <div id="chat-box">
+        <div class="welcome-message">
+            <i class="fas fa-comments"></i>
+            <h2>欢迎使用AI智能助手</h2>
+            <p>我可以回答各种问题、提供建议和帮助解决问题。试试问我任何问题吧！</p>
+        </div>
+    </div>
+
+    <div id="input-box">
+        <input id="message" type="text" placeholder="输入你的问题..." autocomplete="off" />
+        <button id="send"><i class="fas fa-paper-plane"></i> 发送</button>
+        <button id="stop"><i class="fas fa-stop"></i> 停止</button>
+    </div>
+</div>
+
+<script>
+const chatBox = document.getElementById("chat-box");
+const messageInput = document.getElementById("message");
+const sendBtn = document.getElementById("send");
+const stopBtn = document.getElementById("stop");
+
+let currentController = null;
+let isTyping = false;
+
+// 配置marked.js
+marked.setOptions({
+    breaks: true,
+    gfm: true,
+    highlight: function(code, lang) {
+        // 这里可以添加代码高亮逻辑
+        return code;
+    }
+});
+
+function appendMessage(role, htmlText="") {
+    const div = document.createElement("div");
+    div.className = `message ${role}`;
+    
+    const infoDiv = document.createElement("div");
+    infoDiv.className = "message-info";
+    
+    if(role === "user") {
+        infoDiv.innerHTML = `<i class="fas fa-user"></i> <span>你</span>`;
+    } else {
+        infoDiv.innerHTML = `<i class="fas fa-robot"></i> <span>AI助手</span>`;
+    }
+    
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "content";
+    contentDiv.innerHTML = htmlText;
+    
+    div.appendChild(infoDiv);
+    div.appendChild(contentDiv);
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return contentDiv;
+}
+
+function showTypingIndicator() {
+    if(isTyping) return;
+    
+    const typingDiv = document.createElement("div");
+    typingDiv.className = "typing-indicator";
+    typingDiv.id = "typing-indicator";
+    typingDiv.innerHTML = `
+        <span></span>
+        <span></span>
+        <span></span>
+    `;
+    chatBox.appendChild(typingDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    isTyping = true;
+}
+
+function hideTypingIndicator() {
+    const typingDiv = document.getElementById("typing-indicator");
+    if(typingDiv) {
+        typingDiv.remove();
+    }
+    isTyping = false;
+}
+
+async function sendMessage() {
+    const userText = messageInput.value.trim();
+    if(!userText) return;
+    
+    // 移除欢迎消息
+    const welcomeMsg = document.querySelector(".welcome-message");
+    if(welcomeMsg) welcomeMsg.remove();
+    
+    appendMessage("user", marked.parse(userText));
+    messageInput.value = "";
+    
+    showTypingIndicator();
+    
+    // 检测常见问候问题
+    const lowerText = userText.toLowerCase();
+    const greetings = ["你好", "hi", "hello", "hey"];
+    const whoQuestions = ["你是谁", "你叫什么", "who are you", "what is your name"];
+    
+    if (greetings.some(q => lowerText.includes(q))) {
+        setTimeout(() => {
+            hideTypingIndicator();
+            const botContent = appendMessage("bot");
+            typeWriter(botContent, "你好！我是AI智能助手，很高兴为你服务。有什么我可以帮助你的吗？");
+        }, 1000);
+        return;
+    }
+    
+    if (whoQuestions.some(q => lowerText.includes(q))) {
+        setTimeout(() => {
+            hideTypingIndicator();
+            const botContent = appendMessage("bot");
+            typeWriter(botContent, "我是AI智能助手，一个基于人工智能的聊天机器人。我可以回答各种问题、提供建议和帮助解决问题。");
+        }, 1000);
+        return;
+    }
+
+    if(currentController) currentController.abort();
+    currentController = new AbortController();
+    const signal = currentController.signal;
+
+    try {
+        const response = await fetch("/api/chat", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({message:userText}),
+            signal
+        });
+        
+        if(!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        hideTypingIndicator();
+        const botContent = appendMessage("bot");
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let fullResponse = "";
+
+        while(true){
+            const {done,value} = await reader.read();
+            if(done) break;
+            if(!value) continue;
+
+            const chunk = decoder.decode(value,{stream:true});
+            chunk.split(/\n+/).forEach(line=>{
+                if(line.startsWith("data: ")){
+                    let data = line.replace("data: ","");
+
+                    if(data === "[DONE]") return;
+                    if(data.startsWith("[ERROR]")){
+                        botContent.innerHTML = data;
+                        return;
+                    }
+
+                    fullResponse += data;
+                    botContent.innerHTML = marked.parse(fullResponse);
+                    MathJax.typesetPromise([botContent]);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            });
+        }
+
+    } catch(err){
+        hideTypingIndicator();
+        if(err.name === "AbortError"){
+            const botContent = appendMessage("bot", "<i>响应已停止</i>");
+        } else {
+            console.error(err);
+            const botContent = appendMessage("bot", `<span style="color: var(--danger)">[错误] ${err.message}</span>`);
+        }
+    } finally {
+        currentController = null;
+    }
+}
+
+// 打字机效果
+function typeWriter(element, text, speed=20) {
+    let i = 0;
+    element.innerHTML = "";
+    
+    function typing() {
+        if (i < text.length) {
+            element.innerHTML += text.charAt(i);
+            i++;
+            chatBox.scrollTop = chatBox.scrollHeight;
+            setTimeout(typing, speed);
+        }
+    }
+    
+    typing();
+}
+
+sendBtn.addEventListener("click", sendMessage);
+messageInput.addEventListener("keydown", e=>{
+    if(e.key==="Enter" && !e.shiftKey){
+        e.preventDefault();
+        sendMessage();
+    }
+});
+stopBtn.addEventListener("click", ()=>{
+    if(currentController) currentController.abort();
+    hideTypingIndicator();
+});
+
+// 自动聚焦输入框
+messageInput.focus();
+</script>
+
+</body>
+</html>
